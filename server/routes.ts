@@ -110,6 +110,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/bookings/:id", async (req, res) => {
+    try {
+      const booking = await storage.updateBooking(parseInt(req.params.id), req.body);
+      res.json(booking);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error updating booking: " + error.message });
+    }
+  });
+
   // Messages routes
   app.get("/api/messages", async (req, res) => {
     try {

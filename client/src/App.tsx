@@ -14,6 +14,7 @@ import Payments from "@/pages/payments";
 import Integrations from "@/pages/integrations";
 import Housekeeping from "@/pages/housekeeping";
 import AIAssistant from "@/pages/ai-assistant";
+import Calendar from "@/pages/calendar";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 
@@ -28,6 +29,7 @@ function Router() {
             <Route path="/" component={Dashboard} />
             <Route path="/properties" component={Properties} />
             <Route path="/bookings" component={Bookings} />
+            <Route path="/calendar" component={Calendar} />
             <Route path="/messages" component={Messages} />
             <Route path="/housekeeping" component={Housekeeping} />
             <Route path="/analytics" component={Analytics} />
