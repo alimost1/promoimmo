@@ -1,11 +1,11 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users table for authentication and roles
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
@@ -15,12 +15,12 @@ export const users = pgTable("users", {
   phone: text("phone"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Properties table for rental units
-export const properties = pgTable("properties", {
-  id: serial("id").primaryKey(),
+export const properties = sqliteTable("properties", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   address: text("address").notNull(),
   description: text("description"),
@@ -28,102 +28,102 @@ export const properties = pgTable("properties", {
   bedrooms: integer("bedrooms").notNull(),
   bathrooms: integer("bathrooms").notNull(),
   maxGuests: integer("max_guests").notNull(),
-  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
-  cleaningFee: decimal("cleaning_fee", { precision: 10, scale: 2 }).default("0"),
+  basePrice: real("base_price").notNull(),
+  cleaningFee: real("cleaning_fee").default(0),
   ownerId: integer("owner_id").references(() => users.id),
-  images: text("images").array(),
-  amenities: text("amenities").array(),
-  isActive: boolean("is_active").default(true),
+  images: text("images"), // JSON string for SQLite
+  amenities: text("amenities"), // JSON string for SQLite
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
   airbnbId: text("airbnb_id"),
   bookingComId: text("booking_com_id"),
   vrboId: text("vrbo_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Bookings table for reservations
-export const bookings = pgTable("bookings", {
-  id: serial("id").primaryKey(),
+export const bookings = sqliteTable("bookings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   propertyId: integer("property_id").references(() => properties.id),
   guestName: text("guest_name").notNull(),
   guestEmail: text("guest_email").notNull(),
   guestPhone: text("guest_phone"),
-  checkInDate: timestamp("check_in_date").notNull(),
-  checkOutDate: timestamp("check_out_date").notNull(),
+  checkInDate: integer("check_in_date", { mode: 'timestamp' }).notNull(),
+  checkOutDate: integer("check_out_date", { mode: 'timestamp' }).notNull(),
   guests: integer("guests").notNull(),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: real("total_amount").notNull(),
   status: text("status").notNull().default("pending"), // pending, confirmed, checked_in, checked_out, cancelled
   source: text("source").notNull().default("direct"), // direct, airbnb, booking_com, vrbo
   externalBookingId: text("external_booking_id"),
   paymentStatus: text("payment_status").default("pending"), // pending, paid, refunded
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   specialRequests: text("special_requests"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Messages table for guest communication
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   bookingId: integer("booking_id").references(() => bookings.id),
   propertyId: integer("property_id").references(() => properties.id),
   sender: text("sender").notNull(), // guest, host, system, ai
   senderName: text("sender_name"),
   senderEmail: text("sender_email"),
   message: text("message").notNull(),
-  isRead: boolean("is_read").default(false),
+  isRead: integer("is_read", { mode: 'boolean' }).default(false),
   source: text("source").default("direct"), // direct, airbnb, booking_com, whatsapp
   externalMessageId: text("external_message_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Housekeeping tasks
-export const housekeepingTasks = pgTable("housekeeping_tasks", {
-  id: serial("id").primaryKey(),
+export const housekeepingTasks = sqliteTable("housekeeping_tasks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   propertyId: integer("property_id").references(() => properties.id),
   bookingId: integer("booking_id").references(() => bookings.id),
   assignedTo: integer("assigned_to").references(() => users.id),
   taskType: text("task_type").notNull(), // cleaning, maintenance, inspection
   status: text("status").default("pending"), // pending, in_progress, completed
-  dueDate: timestamp("due_date"),
+  dueDate: integer("due_date", { mode: 'timestamp' }),
   notes: text("notes"),
-  completedAt: timestamp("completed_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: integer("completed_at", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Payments table
-export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
+export const payments = sqliteTable("payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   bookingId: integer("booking_id").references(() => bookings.id),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: real("amount").notNull(),
   currency: text("currency").default("USD"),
   status: text("status").default("pending"), // pending, completed, failed, refunded
   paymentMethod: text("payment_method"), // stripe, cash, bank_transfer
   stripePaymentIntentId: text("stripe_payment_intent_id"),
-  processingFee: decimal("processing_fee", { precision: 10, scale: 2 }),
-  createdAt: timestamp("created_at").defaultNow(),
+  processingFee: real("processing_fee"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // OTA integrations
-export const otaIntegrations = pgTable("ota_integrations", {
-  id: serial("id").primaryKey(),
+export const otaIntegrations = sqliteTable("ota_integrations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   platform: text("platform").notNull(), // airbnb, booking_com, vrbo
   propertyId: integer("property_id").references(() => properties.id),
   externalPropertyId: text("external_property_id").notNull(),
-  isActive: boolean("is_active").default(true),
-  lastSyncAt: timestamp("last_sync_at"),
-  syncSettings: jsonb("sync_settings"),
-  credentials: jsonb("credentials"),
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
+  lastSyncAt: integer("last_sync_at", { mode: 'timestamp' }),
+  syncSettings: text("sync_settings"), // JSON string
+  credentials: text("credentials"), // JSON string
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 // Analytics data
-export const analytics = pgTable("analytics", {
-  id: serial("id").primaryKey(),
+export const analytics = sqliteTable("analytics", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   propertyId: integer("property_id").references(() => properties.id),
-  date: timestamp("date").notNull(),
-  occupancyRate: decimal("occupancy_rate", { precision: 5, scale: 2 }),
-  revenue: decimal("revenue", { precision: 10, scale: 2 }),
+  date: integer("date", { mode: 'timestamp' }).notNull(),
+  occupancyRate: real("occupancy_rate"),
+  revenue: real("revenue"),
   bookingsCount: integer("bookings_count").default(0),
-  averageStay: decimal("average_stay", { precision: 5, scale: 2 }),
+  averageStay: real("average_stay"),
   source: text("source"), // daily, weekly, monthly
 });
 

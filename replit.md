@@ -25,10 +25,10 @@ Preferred communication style: Simple, everyday language.
 - **Middleware**: Express middleware for logging, error handling, and request parsing
 
 ### Database Architecture
-- **Database**: PostgreSQL via Neon serverless platform
+- **Database**: SQLite with better-sqlite3 for local development and portability
 - **ORM**: Drizzle ORM for type-safe database operations
 - **Schema Management**: Drizzle Kit for migrations and schema management
-- **Connection**: Neon serverless driver with WebSocket support
+- **Connection**: Native SQLite connection via better-sqlite3 driver
 
 ## Key Components
 
@@ -74,7 +74,7 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Core Dependencies
-- **@neondatabase/serverless**: PostgreSQL database connection
+- **better-sqlite3**: Fast SQLite3 bindings for Node.js
 - **drizzle-orm**: Database ORM and query builder
 - **@tanstack/react-query**: Server state management
 - **@stripe/stripe-js**: Payment processing integration
@@ -88,8 +88,8 @@ Preferred communication style: Simple, everyday language.
 - **vite**: Frontend build tool and development server
 
 ### Optional Integrations
-- **connect-pg-simple**: PostgreSQL session store
-- **ws**: WebSocket support for Neon database
+- **@types/better-sqlite3**: TypeScript definitions for SQLite
+- **ws**: WebSocket support for real-time features
 - Various date/time utilities and form libraries
 
 ## Deployment Strategy
@@ -105,15 +105,15 @@ Preferred communication style: Simple, everyday language.
 3. **Database**: Drizzle migrations applied via `db:push` command
 
 ### Environment Configuration
-- Database URL required for PostgreSQL connection
+- Local SQLite database file (cloudstay.db)
 - Stripe secret key for payment processing
 - Environment-specific configurations for development vs production
 
 ### Hosting Considerations
 - Designed for deployment on platforms supporting Node.js
 - Static assets served from Express in production
-- Database hosted on Neon serverless platform
-- Requires WebSocket support for real-time database features
+- Self-contained SQLite database for portability
+- No external database dependencies required
 
 ## Architecture Benefits
 
